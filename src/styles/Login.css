@@ -1,0 +1,116 @@
+/* NBCC Color Palette */
+:root {
+  --ocean-blue: #007599;
+  --urban-green: #829600;
+  --possibility-blue: #A1D8E0;
+  /*--field-gold: #EAAB00;*/
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--possibility-blue);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-container {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-box {
+  background: white;
+  padding: 65px 55px;         
+  width: 520px;                
+  min-height: 320px;          
+  border-radius: 20px;      
+  box-shadow: 0 8px 40px rgba(0,0,0,0.20);
+  text-align: center;
+  border-top: 10px solid var(--ocean-blue);
+  position: relative;
+}
+
+.login-box h2 {
+  margin-bottom: 35px;
+  font-size: 25px;             
+  color: var(--ocean-blue);
+}
+
+/* Floating Label Wrapper */
+.floating-label {
+  position: relative;
+  margin: 28px 0;
+  text-align: left;
+}
+
+/* Input */
+.floating-label input {
+  width: 90%;
+  padding: 16px 16px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  font-size: 18px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.floating-label input:focus {
+  border-color: var(--ocean-blue);
+}
+
+/* Label Animation */
+.floating-label label {
+  position: absolute;
+  top: 14px;
+  left: 12px;
+  color: #666;
+  pointer-events: none;
+  transition: 0.2s ease;
+  background: white;
+  padding: 0 4px;
+}
+
+/* When typing or focused */
+.floating-label input:focus + label,
+.floating-label input:not(:placeholder-shown) + label,
+.floating-label input:valid + label {
+  top: -8px;
+  left: 10px;
+  font-size: 12px;
+  color: var(--ocean-blue);
+}
+
+.login-box button {
+  width: 100%;
+  padding: 17px;
+  background: var(--urban-green);
+  color: white;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 17px;
+  margin-top: 25px;
+  transition: 0.2s ease;
+}
+
+.login-box button:hover {
+  background: #8ebf65;
+}
+
+.error {
+  position: absolute;
+  bottom: 135px;         
+  left: 50%;
+  transform: translateX(-50%);
+  color: red;
+  font-size: 15px;
+  margin: 0;
+  pointer-events: none;
+  white-space: nowrap;
+}
