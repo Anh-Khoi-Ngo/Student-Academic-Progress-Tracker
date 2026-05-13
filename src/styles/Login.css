@@ -52,7 +52,7 @@ body {
 /* Input */
 .floating-label input {
   width: 90%;
-  padding: 16px 16px;
+  padding: 12px 16px;
   border: 1px solid #ccc;
   border-radius: 12px;
   font-size: 18px;

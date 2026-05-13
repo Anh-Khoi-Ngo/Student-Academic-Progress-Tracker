@@ -1,6 +1,22 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import "../styles/Login.css";
 import { useNavigate } from "react-router-dom";
+
+const login = async (email, password) => {
+  const response = await fetch("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    return { error: data.error || data.message || "Login failed" };
+  }
+
+  return data;
+};
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -23,7 +39,7 @@ export default function Login() {
         localStorage.setItem("token", result.token);
         localStorage.setItem("user", JSON.stringify(result.user));
         alert("Login successful");
-        navigate("/books");
+        navigate("/instructor");
       }
     } catch (err) {
       console.error("Login failed:", err);
