@@ -1,7 +1,9 @@
 import { useState } from "react";
 import "../styles/StudentCSVImport.css";
+import { useNavigate } from "react-router-dom";
 
 export default function StudentCSVImport() {
+  const navigate = useNavigate();
   const [previewRows, setPreviewRows] = useState([]);
 
   const handleFileUpload = (e) => {
@@ -28,8 +30,8 @@ export default function StudentCSVImport() {
 
         <nav className="drawer-nav">
           <button className="drawer-item">Sync Curriculum</button>
-          <button className="drawer-item active">Students Management & CSV Import</button>
-          <button className="drawer-item">Instructor Interface</button>
+          <button className="drawer-item active" onClick={() => navigate("/student-csv-import")}>Students Management & CSV Import</button>
+          <button className="drawer-item" onClick={() => navigate("/instructor")}>Instructor Interface</button>
         </nav>
       </aside>
 

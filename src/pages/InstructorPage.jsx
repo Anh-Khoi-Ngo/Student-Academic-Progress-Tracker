@@ -1,7 +1,14 @@
 import { useState, useMemo } from "react";
 import "../styles/InstructorPage.css";
+import { useNavigate } from "react-router-dom";
 
 export default function InstructorPage() {
+  const navigate = useNavigate();
+  const programInfo = {
+    code: "ITSD",
+    title: "Information Technology: Software Development"
+  };
+
   const termMap = useMemo(() => ({
     "Fall 2025": [
       "COMM1281A", "DATA1054A", "MATH1300A", "MULT1190A",
@@ -70,12 +77,11 @@ export default function InstructorPage() {
 
   const [students, setStudents] = useState(mockStudents);
 
-  // FILTER STATE
   const [selectedTerm, setSelectedTerm] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
   const [selectedProgram, setSelectedProgram] = useState("");
 
-  // FILTER LOGIC
+  // FIXED FILTER LOGIC
   const filteredTerms = useMemo(() => {
     let terms = Object.entries(termMap);
 
@@ -89,9 +95,7 @@ export default function InstructorPage() {
       );
     }
 
-    // Program filtering placeholder (expand when mapping exists)
     if (selectedProgram) {
-      // Example: ITSD = all PROG courses
       terms = terms.map(([term, codes]) => [
         term,
         codes.filter(code =>
@@ -102,10 +106,11 @@ export default function InstructorPage() {
       ]);
     }
 
-    return terms.filter(([codes]) => codes.length > 0);
+    return terms.filter(([, codes]) => codes.length > 0);
   }, [selectedTerm, selectedYear, selectedProgram, termMap]);
 
-  const filteredCourses = filteredTerms.flatMap(([codes]) => codes);
+  // FIXED DESTRUCTURING
+  const filteredCourses = filteredTerms.flatMap(([, codes]) => codes);
 
   const updateGrade = (studentId, courseCode, newGrade) => {
     setStudents(prev =>
@@ -118,96 +123,98 @@ export default function InstructorPage() {
   };
 
   return (
-     <div className="page-layout">
+    <div className="page-layout">
 
-    {/* LEFT DRAWER */}
-    <aside className="left-drawer">
-       <div className="drawer-header">
-    <span className="drawer-title">Academic Progress Tracker</span>
-  </div>
+      {/* LEFT DRAWER */}
+      <aside className="left-drawer">
+        <div className="drawer-header">
+          <span className="drawer-title">Academic Progress Tracker</span>
+        </div>
 
-  <nav className="drawer-nav">
-    <button className="drawer-item">Sync Curriculum</button>
-    <button className="drawer-item">Students Management & CSV Import</button>
-    <button className="drawer-item">Instructor Interface</button>
-  </nav>
-    </aside>
-    <div className="instructor-container">
+        <nav className="drawer-nav">
+          <button className="drawer-item">Sync Curriculum</button>
+          <button className="drawer-item" onClick={() => navigate("/student-csv-import")}>Students Management & CSV Import</button>
+          <button className="drawer-item active" onClick={() => navigate("/instructor")}>Instructor Interface</button>
+        </nav>
+      </aside>
 
-      {/* Sticky Page Title */}
-      <h1 className="title">Instructor User Interface</h1>
+      <div className="instructor-container">
 
-      {/* FILTER BAR */}
-      <div className="filters">
-        <select value={selectedTerm} onChange={e => setSelectedTerm(e.target.value)}>
-          <option value="">All Terms</option>
-          {Object.keys(termMap).map(term => (
-            <option key={term} value={term}>{term}</option>
-          ))}
-        </select>
+        <h1 className="title">Instructor User Interface</h1>
 
-        <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)}>
-          <option value="">All Years</option>
-          <option value="1">Year 1</option>
-          <option value="2">Year 2</option>
-        </select>
+        {/* FILTER BAR */}
+        <div className="filters">
+          <select value={selectedTerm} onChange={e => setSelectedTerm(e.target.value)}>
+            <option value="">All Terms</option>
+            {Object.keys(termMap).map(term => (
+              <option key={term} value={term}>{term}</option>
+            ))}
+          </select>
 
-        <select value={selectedProgram} onChange={e => setSelectedProgram(e.target.value)}>
-          <option value="">All Programs</option>
-          <option value="ITSD">IT: Software Development</option>
-          <option value="ITBA">IT: Business Analyst</option>
-        </select>
-      </div>
+          <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)}>
+            <option value="">All Years</option>
+            <option value="1">Year 1</option>
+            <option value="2">Year 2</option>
+          </select>
 
-      {/* SCROLL WRAPPER */}
-      <div className="scroll-container">
-        <div className="grid-wrapper">
-          <table className="course-grid">
-            <thead>
-              <tr>
-                <th className="sticky-col col-1 sticky-top" rowSpan={2}>First Name</th>
-                <th className="sticky-col col-2 sticky-top" rowSpan={2}>Last Name</th>
-                <th className="sticky-col col-3 sticky-top" rowSpan={2}>Student ID</th>
-                <th className="sticky-col col-4 sticky-top" rowSpan={2}>Email Address</th>
+          <select value={selectedProgram} onChange={e => setSelectedProgram(e.target.value)}>
+            <option value="">All Programs</option>
+            <option value="ITSD">IT: Software Development</option>
+            <option value="ITBA" disabled>IT: Business Analyst</option>
+          </select>
+        </div>
 
-                {filteredTerms.map(([term, codes]) => (
-                  <th key={term} colSpan={codes.length} className="term-header sticky-top">
-                    {term}
-                  </th>
-                ))}
-              </tr>
+        {/* TABLE */}
+        <div className="scroll-container">
+          <div className="grid-wrapper">
+            <table className="course-grid">
+              <thead>
+                <tr>
+                  <th className="sticky-col col-1" rowSpan={2}>First Name</th>
+                  <th className="sticky-col col-2" rowSpan={2}>Last Name</th>
+                  <th className="sticky-col col-3" rowSpan={2}>Student ID</th>
+                  <th className="sticky-col col-4" rowSpan={2}>Email Address</th>
 
-              <tr>
-                {filteredCourses.map(code => (
-                  <th key={code} className="course-header sticky-top">
-                    <div className="course-header-content">
-                      <span className="course-code">{code}</span>
-                      <span className="course-title" title={courseTitles[code]}>
-                        {courseTitles[code]}
-                      </span>
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
+                  {filteredTerms.map(([term, codes]) => (
+                    <th key={term} colSpan={codes.length} className="term-header sticky-top">
+                      <div className="term-header-content">
+                        <span className="term-title">{term}</span>
+                        <span className="program-info">
+                          {programInfo.code} — {programInfo.title}
+                        </span>
+                      </div>
+                    </th>
+                  ))}
+                </tr>
 
-            <tbody>
-              {students.map(s => (
-                <tr key={s.studentId}>
-                  <td className="sticky-col col-1 student-data">{s.firstName}</td>
-                  <td className="sticky-col col-2 student-data">{s.lastName}</td>
-                  <td className="sticky-col col-3 student-data id-data">{s.studentId}</td>
-                  <td className="sticky-col col-4 student-data email-data">{s.email}</td>
+                <tr>
+                  {filteredCourses.map(code => (
+                    <th key={code} className="course-header sticky-top">
+                      <div className="course-header-content">
+                        <span className="course-code">{code}</span>
+                        <span className="course-title" title={courseTitles[code]}>
+                          {courseTitles[code]}
+                        </span>
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
 
-                  {filteredCourses.map(course => {
-                    const grade = s.grades[course] || "Not Started";
-                    const gradeClass = grade.toLowerCase().replace(" ", "-");
+              <tbody>
+                {students.map(s => (
+                  <tr key={s.studentId}>
+                    <td className="sticky-col col-1">{s.firstName}</td>
+                    <td className="sticky-col col-2">{s.lastName}</td>
+                    <td className="sticky-col col-3">{s.studentId}</td>
+                    <td className="sticky-col col-4">{s.email}</td>
 
-                    return (
-                      <td key={course} className="cell">
-                        <div className="select-container">
+                    {filteredCourses.map(course => {
+                      const grade = s.grades[course] || "Not Started";
+
+                      return (
+                        <td key={course} className="cell">
                           <select
-                            className={`grade-select ${gradeClass}`}
                             value={grade}
                             onChange={e =>
                               updateGrade(s.studentId, course, e.target.value)
@@ -219,18 +226,18 @@ export default function InstructorPage() {
                             <option value="In Progress">In Progress</option>
                             <option value="Not Started">Not Started</option>
                           </select>
-                        </div>
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
 
-          </table>
+            </table>
+          </div>
         </div>
+
       </div>
-    </div>
     </div>
   );
 }
