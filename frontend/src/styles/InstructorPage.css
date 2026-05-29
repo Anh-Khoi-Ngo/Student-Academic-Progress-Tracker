@@ -32,10 +32,10 @@
     font-size: 28px;
     font-weight: 700;
     margin-bottom: 20px;
-    position: sticky;
+    position: static;
     top: 0;
     z-index: 2000;
-    background: var(--possibility-blue);
+    background: none;
     padding: 10px 0;
   }
 
