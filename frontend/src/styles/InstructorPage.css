@@ -173,7 +173,7 @@ body,
 /* STICKY TOP */
 .sticky-top {
   position: sticky;
-  top: 68px;
+  top: 0;
   z-index: 20;
 }
 
@@ -254,8 +254,8 @@ thead .sticky-col {
 
 /* COURSE HEADER */
 .course-header {
-  background: var(--field-gold);
-  color: black;
+  background: var(--ocean-blue);
+  color: white;
   font-weight: 700;
 }
 
@@ -269,6 +269,7 @@ thead .sticky-col {
 .course-code {
   font-size: 11px;
   font-weight: bold;
+  color: white;
 }
 
 .course-title {
@@ -276,7 +277,9 @@ thead .sticky-col {
   line-height: 1.1;
   max-width: 120px;
   word-wrap: break-word;
+  color: white;
 }
+
 
 /* DATA CELLS */
 .cell {
