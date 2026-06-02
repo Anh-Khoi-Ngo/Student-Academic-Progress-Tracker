@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 export default function InstructorPage() {
   const navigate = useNavigate();
 
+  // IMPORTANT: Use server IP, not localhost
   const BACKEND = "http://10.157.123.59/backend";
 
   const [students, setStudents] = useState([]);
@@ -54,8 +55,9 @@ export default function InstructorPage() {
     return Array.from(set).sort();
   }, [studentsWithGrades]);
 
-  // Update grade locally
-  const updateGrade = (studentId, courseCode, newGrade) => {
+  // Update grade locally + save to DB
+  const updateGrade = async (studentId, courseCode, newGrade) => {
+    // Update UI instantly
     setStudentsWithGrades(prev =>
       prev.map(s =>
         s.studentId === studentId
@@ -72,6 +74,23 @@ export default function InstructorPage() {
           : s
       )
     );
+
+    // Save to database
+    try {
+      await fetch(`${BACKEND}/updateEnrollmentStatus.php`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+          studentId,
+          courseCode,
+          status: newGrade
+        })
+      });
+    } catch (err) {
+      console.error("Failed to update grade:", err);
+    }
   };
 
   return (
