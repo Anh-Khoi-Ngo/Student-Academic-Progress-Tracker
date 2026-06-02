@@ -1,122 +1,74 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import "../styles/InstructorPage.css";
 import { useNavigate } from "react-router-dom";
 
 export default function InstructorPage() {
   const navigate = useNavigate();
-  const programInfo = {
-    code: "ITSD",
-    title: "Information Technology: Software Development"
-  };
 
-  const termMap = useMemo(() => ({
-    "Fall 2025": [
-      "COMM1281A", "DATA1054A", "MATH1300A", "MULT1190A",
-      "OSSE1101A", "PERS1274A", "PROG1337A", "SAAL1882A"
-    ],
-    "Winter 2026": [
-      "DATA1055A", "ETHI1075A", "OSSE1100A", "PROG1338A",
-      "PROG1339B", "PROG1340A", "SECU1322C", "SYST1088A"
-    ],
-    "Fall 2026": [
-      "PERS1313A", "PROG1341A", "PROG1342A", "PROG1343A", "PROG1346A"
-    ],
-    "Winter 2027": [
-      "COMM1282A", "PROG1344A", "PROG1345A"
-    ],
-    "Spring/Summer 2027": [
-      "PROG1357A", "PROG1358A"
-    ]
-  }), []);
+  const BACKEND = "http://10.157.123.59/backend";
 
-  const courseTitles = {
-    COMM1281A: "Written, Interpersonal, and Intrapersonal Skills Development",
-    DATA1054A: "Database Design and SQL",
-    MATH1300A: "Computer Math and Statistics",
-    MULT1190A: "Responsive Web Design",
-    OSSE1101A: "Operating and File Systems Concepts",
-    PERS1274A: "Orientation to Community Services",
-    PROG1337A: "Programming Fundamentals",
-    SAAL1882A: "Introduction to Source Control",
-    DATA1055A: "Intermediate SQL for Developers",
-    ETHI1075A: "Ethics for Computing Professionals",
-    OSSE1100A: "Command Line Interface: Bash",
-    PROG1338A: "Object Oriented Programming",
-    PROG1339B: "JavaScript Programming",
-    PROG1340A: "Database Programming",
-    SECU1322C: "Work Safely",
-    SYST1088A: "Software Engineering",
-    PERS1313A: "Employment Readiness",
-    PROG1341A: "Advanced JavaScript",
-    PROG1342A: "Server-Side Web: MVC Framework",
-    PROG1343A: "PHP",
-    PROG1346A: "Enterprise Java",
-    COMM1282A: "Technical Research and Writing for IT",
-    PROG1344A: "Applied Software Architecture",
-    PROG1345A: "Networking for Programmers",
-    PROG1357A: "Field Experience: Software Development",
-    PROG1358A: "Capstone Project: Software Development"
-  };
+  const [students, setStudents] = useState([]);
+  const [studentsWithGrades, setStudentsWithGrades] = useState([]);
 
-  const mockStudents = [
-    {
-      studentId: "1001",
-      firstName: "John",
-      lastName: "Doe",
-      email: "john.doe@nbcc.ca",
-      grades: {}
-    },
-    {
-      studentId: "1002",
-      firstName: "Sarah",
-      lastName: "Lee",
-      email: "sarah.lee@nbcc.ca",
-      grades: {}
-    }
-  ];
+  // Load all students
+  useEffect(() => {
+    fetch(`${BACKEND}/students.php`)
+      .then(res => res.json())
+      .then(setStudents)
+      .catch(err => console.error("students.php error:", err));
+  }, []);
 
-  const [students, setStudents] = useState(mockStudents);
+  // Load grades for each student
+  useEffect(() => {
+    const load = async () => {
+      const enriched = [];
 
-  const [selectedTerm, setSelectedTerm] = useState("");
-  const [selectedYear, setSelectedYear] = useState("");
-  const [selectedProgram, setSelectedProgram] = useState("");
+      for (const s of students) {
+        const res = await fetch(`${BACKEND}/getStudentsGrades.php?id=${s.studentId}`);
+        const grades = await res.json();
 
-  // FIXED FILTER LOGIC
-  const filteredTerms = useMemo(() => {
-    let terms = Object.entries(termMap);
+        enriched.push({
+          ...s,
+          grades: grades.reduce((acc, g) => {
+            acc[g.Course_code] = {
+              title: g.Title,
+              grade: g.Status
+            };
+            return acc;
+          }, {})
+        });
+      }
 
-    if (selectedTerm) {
-      terms = terms.filter(([term]) => term === selectedTerm);
-    }
+      setStudentsWithGrades(enriched);
+    };
 
-    if (selectedYear) {
-      terms = terms.filter(([term]) =>
-        term.includes(selectedYear === "1" ? "2025" : "2026")
-      );
-    }
+    if (students.length > 0) load();
+  }, [students]);
 
-    if (selectedProgram) {
-      terms = terms.map(([term, codes]) => [
-        term,
-        codes.filter(code =>
-          selectedProgram === "ITSD"
-            ? code.startsWith("PROG")
-            : !code.startsWith("PROG")
-        )
-      ]);
-    }
+  // Collect all unique course codes
+  const allCourses = useMemo(() => {
+    const set = new Set();
+    studentsWithGrades.forEach(s => {
+      Object.keys(s.grades).forEach(code => set.add(code));
+    });
+    return Array.from(set).sort();
+  }, [studentsWithGrades]);
 
-    return terms.filter(([, codes]) => codes.length > 0);
-  }, [selectedTerm, selectedYear, selectedProgram, termMap]);
-
-  // FIXED DESTRUCTURING
-  const filteredCourses = filteredTerms.flatMap(([, codes]) => codes);
-
+  // Update grade locally
   const updateGrade = (studentId, courseCode, newGrade) => {
-    setStudents(prev =>
+    setStudentsWithGrades(prev =>
       prev.map(s =>
         s.studentId === studentId
-          ? { ...s, grades: { ...s.grades, [courseCode]: newGrade } }
+          ? {
+              ...s,
+              grades: {
+                ...s.grades,
+                [courseCode]: {
+                  ...s.grades[courseCode],
+                  grade: newGrade
+                }
+              }
+            }
           : s
       )
     );
@@ -133,67 +85,38 @@ export default function InstructorPage() {
 
         <nav className="drawer-nav">
           <button className="drawer-item">Sync Curriculum</button>
-          <button className="drawer-item" onClick={() => navigate("/student-csv-import")}>Students Management & CSV Import</button>
-          <button className="drawer-item active" onClick={() => navigate("/instructor")}>Instructor Interface</button>
+          <button className="drawer-item" onClick={() => navigate("/student-csv-import")}>
+            Students Management & CSV Import
+          </button>
+          <button className="drawer-item active" onClick={() => navigate("/instructor")}>
+            Instructor Interface
+          </button>
         </nav>
       </aside>
 
       <div className="instructor-container">
-
         <h1 className="title">Instructor User Interface</h1>
 
-        {/* FILTER BAR */}
-        <div className="filters">
-          <select value={selectedTerm} onChange={e => setSelectedTerm(e.target.value)}>
-            <option value="">All Terms</option>
-            {Object.keys(termMap).map(term => (
-              <option key={term} value={term}>{term}</option>
-            ))}
-          </select>
-
-          <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)}>
-            <option value="">All Years</option>
-            <option value="1">Year 1</option>
-            <option value="2">Year 2</option>
-          </select>
-
-          <select value={selectedProgram} onChange={e => setSelectedProgram(e.target.value)}>
-            <option value="">All Programs</option>
-            <option value="ITSD">IT: Software Development</option>
-            <option value="ITBA" disabled>IT: Business Analyst</option>
-          </select>
-        </div>
-
-        {/* TABLE */}
+        {/* GRID */}
         <div className="scroll-container">
           <div className="grid-wrapper">
             <table className="course-grid">
               <thead>
                 <tr>
-                  <th className="sticky-col col-1" rowSpan={2}>First Name</th>
-                  <th className="sticky-col col-2" rowSpan={2}>Last Name</th>
-                  <th className="sticky-col col-3" rowSpan={2}>Student ID</th>
-                  <th className="sticky-col col-4" rowSpan={2}>Email Address</th>
+                  <th className="sticky-col col-1">First Name</th>
+                  <th className="sticky-col col-2">Last Name</th>
+                  <th className="sticky-col col-3">Student ID</th>
+                  <th className="sticky-col col-4">Email</th>
 
-                  {filteredTerms.map(([term, codes]) => (
-                    <th key={term} colSpan={codes.length} className="term-header sticky-top">
-                      <div className="term-header-content">
-                        <span className="term-title">{term}</span>
-                        <span className="program-info">
-                          {programInfo.code} — {programInfo.title}
-                        </span>
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-
-                <tr>
-                  {filteredCourses.map(code => (
+                  {allCourses.map(code => (
                     <th key={code} className="course-header sticky-top">
                       <div className="course-header-content">
                         <span className="course-code">{code}</span>
-                        <span className="course-title" title={courseTitles[code]}>
-                          {courseTitles[code]}
+                        <span className="course-title">
+                          {
+                            studentsWithGrades.find(s => s.grades[code])?.grades[code]?.title ||
+                            "Unknown"
+                          }
                         </span>
                       </div>
                     </th>
@@ -202,26 +125,28 @@ export default function InstructorPage() {
               </thead>
 
               <tbody>
-                {students.map(s => (
+                {studentsWithGrades.map(s => (
                   <tr key={s.studentId}>
                     <td className="sticky-col col-1">{s.firstName}</td>
                     <td className="sticky-col col-2">{s.lastName}</td>
                     <td className="sticky-col col-3">{s.studentId}</td>
                     <td className="sticky-col col-4">{s.email}</td>
 
-                    {filteredCourses.map(course => {
-                      const grade = s.grades[course] || "Not Started";
+                    {allCourses.map(code => {
+                      const course = s.grades[code];
+                      const grade = course?.grade || "Not Started";
 
                       return (
-                        <td key={course} className="cell">
+                        <td key={code} className="cell">
                           <select
                             value={grade}
                             onChange={e =>
-                              updateGrade(s.studentId, course, e.target.value)
+                              updateGrade(s.studentId, code, e.target.value)
                             }
                           >
-                            <option value="Pass">Pass</option>
-                            <option value="Fail">Fail</option>
+                            <option value="Passed">Passed</option>
+                            <option value="Failed">Failed</option>
+                            <option value="Active">Active</option>
                             <option value="Withdrawn">Withdrawn</option>
                             <option value="In Progress">In Progress</option>
                             <option value="Not Started">Not Started</option>
