@@ -2,26 +2,34 @@ import { useState } from "react";
 import "../styles/Login.css";
 import { useNavigate } from "react-router-dom";
 
+// Use your server IP, not localhost
+const BACKEND = "http://10.157.123.59/backend";
+
 const login = async (email, password) => {
-  const response = await fetch("/api/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+  try {
+    const response = await fetch(`${BACKEND}/login.php`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-  const data = await response.json();
+    const data = await response.json();
 
-  if (!response.ok) {
-    return { error: data.error || data.message || "Login failed" };
+    if (!response.ok || data.error) {
+      return { error: data.error || "Login failed" };
+    }
+
+    return data;
+
+  } catch (err) {
+    console.error("Login request failed:", err);
+    return { error: "Server connection failed" };
   }
-
-  return data;
 };
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
@@ -29,22 +37,29 @@ export default function Login() {
     e.preventDefault();
     setError("");
 
-    try {
-      const result = await login(email, password);
-
-      if (result.error) {
-        setError(result.error);
-        console.log("Login error:", result.error);
-      } else {
-        localStorage.setItem("token", result.token);
-        localStorage.setItem("user", JSON.stringify(result.user));
-        alert("Login successful");
-        navigate("/instructor");
-      }
-    } catch (err) {
-      console.error("Login failed:", err);
-      setError("Login failed");
+    if (!email.trim()) {
+      setError("Email is required");
+      return;
     }
+
+    if (!password.trim()) {
+      setError("Password is required");
+      return;
+    }
+
+    const result = await login(email, password);
+
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+
+    // Save token + user info
+    localStorage.setItem("token", result.token);
+    localStorage.setItem("user", JSON.stringify(result.user));
+    
+    alert("Login successful!");
+    navigate("/instructor");
   };
 
   return (
@@ -65,19 +80,13 @@ export default function Login() {
 
         <div className="floating-label">
           <input
-            type={showPassword ? "text" : "password"}
+            type="password"
             placeholder=" "
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
           <label>Password</label>
-
-          <span
-            className="toggle-password"
-            onClick={() => setShowPassword(!showPassword)}
-          >
-          </span>
         </div>
 
         <p className="error">{error}</p>
