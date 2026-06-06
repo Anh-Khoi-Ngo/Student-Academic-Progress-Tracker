@@ -12,6 +12,14 @@
   background: var(--possibility-blue);
 }
 
+.sidebar-column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 1rem;
+}
+
+
 /* LEFT DRAWER */
 .left-drawer {
  width: 230px;
@@ -66,8 +74,47 @@
   background: rgba(255,255,255,0.3);
 }
 
+.instructor-info-panel {
+  background: white;
+  margin-left: 33px;
+  padding: 0.6rem;
+  margin-top: 0.5rem;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+  width: 242px;
+  font-size: 13px;
+  color: #003b4f;
+}
+
+.instructor-name {
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.instructor-email {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.logout-btn {
+  margin-top: 8px;
+  background: var(--ocean-blue);
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+  font-size: 13px;
+}
+
+.logout-btn:hover {
+  background: #005f7a;
+}
+
 /* MAIN CONTENT */
 .csv-container {
+  position: relative;
   flex: 1;
   padding: 2rem;
 }
@@ -166,3 +213,4 @@
   padding: 1rem;
   color: #666;
 }
+

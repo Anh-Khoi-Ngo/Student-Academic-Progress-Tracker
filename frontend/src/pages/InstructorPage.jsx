@@ -5,11 +5,23 @@ import { useNavigate } from "react-router-dom";
 export default function InstructorPage() {
   const navigate = useNavigate();
 
-  // IMPORTANT: Use server IP, not localhost
+  // Check login
+  useEffect(() => {
+    if (!localStorage.getItem("instructorId")) {
+      alert("Please log in first");
+      navigate("/login");
+    }
+  }, [navigate]);
   const BACKEND = "http://10.157.123.59/backend";
 
   const [students, setStudents] = useState([]);
   const [studentsWithGrades, setStudentsWithGrades] = useState([]);
+
+  // Instructor info from localStorage
+  const instructor = {
+    name: localStorage.getItem("instructorName"),
+    email: localStorage.getItem("instructorEmail")
+  };
 
   // Load all students
   useEffect(() => {
@@ -57,7 +69,6 @@ export default function InstructorPage() {
 
   // Update grade locally + save to DB
   const updateGrade = async (studentId, courseCode, newGrade) => {
-    // Update UI instantly
     setStudentsWithGrades(prev =>
       prev.map(s =>
         s.studentId === studentId
@@ -75,13 +86,10 @@ export default function InstructorPage() {
       )
     );
 
-    // Save to database
     try {
       await fetch(`${BACKEND}/updateEnrollmentStatus.php`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
           studentId,
           courseCode,
@@ -96,27 +104,47 @@ export default function InstructorPage() {
   return (
     <div className="page-layout">
 
-      {/* LEFT DRAWER */}
-      <aside className="left-drawer">
-        <div className="drawer-header">
-          <span className="drawer-title">Academic Progress Tracker</span>
+      {/* LEFT COLUMN (drawer + info box) */}
+      <div className="sidebar-column">
+
+        <aside className="left-drawer">
+          <div className="drawer-header">
+            <span className="drawer-title">Academic Progress Tracker</span>
+          </div>
+
+          <nav className="drawer-nav">
+            <button className="drawer-item">Sync Curriculum</button>
+            <button className="drawer-item" onClick={() => navigate("/student-csv-import")}>
+              Students Management & CSV Import
+            </button>
+            <button className="drawer-item active" onClick={() => navigate("/instructor")}>
+              Instructor Interface
+            </button>
+          </nav>
+        </aside>
+
+        {/* INFO BOX BELOW DRAWER */}
+        <div className="instructor-info-panel">
+          <div className="instructor-name">{instructor.name}</div>
+          <div className="instructor-email">{instructor.email}</div>
+
+          <button
+            className="logout-btn"
+            onClick={() => {
+              localStorage.clear();
+              navigate("/login");
+            }}
+          >
+            Logout
+          </button>
         </div>
 
-        <nav className="drawer-nav">
-          <button className="drawer-item">Sync Curriculum</button>
-          <button className="drawer-item" onClick={() => navigate("/student-csv-import")}>
-            Students Management & CSV Import
-          </button>
-          <button className="drawer-item active" onClick={() => navigate("/instructor")}>
-            Instructor Interface
-          </button>
-        </nav>
-      </aside>
+      </div>
 
+      {/* MAIN CONTENT */}
       <div className="instructor-container">
         <h1 className="title">Instructor User Interface</h1>
 
-        {/* GRID */}
         <div className="scroll-container">
           <div className="grid-wrapper">
             <table className="course-grid">

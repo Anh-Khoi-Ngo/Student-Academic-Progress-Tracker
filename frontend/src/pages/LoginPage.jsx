@@ -57,7 +57,10 @@ export default function Login() {
     // Save token + user info
     localStorage.setItem("token", result.token);
     localStorage.setItem("user", JSON.stringify(result.user));
-    
+    localStorage.setItem("instructorId", result.user.id);
+    localStorage.setItem("instructorName", `${result.user.firstName} ${result.user.lastName}`);
+    localStorage.setItem("instructorEmail", result.user.email);
+
     alert("Login successful!");
     navigate("/instructor");
   };

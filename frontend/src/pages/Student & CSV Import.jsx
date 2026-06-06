@@ -1,18 +1,32 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "../styles/StudentCSVImport.css";
 import { useNavigate } from "react-router-dom";
 
 export default function StudentCSVImport() {
   const navigate = useNavigate();
   const [previewRows, setPreviewRows] = useState([]);
+  const [instructor] = useState(() => ({
+    name: localStorage.getItem("instructorName") || "Unknown Instructor",
+    email: localStorage.getItem("instructorEmail") || "No Email Found",
+  }));
 
+  // AUTH CHECK
+  useEffect(() => {
+    const id = localStorage.getItem("instructorId");
+    if (!id) {
+      alert("Please log in first");
+      navigate("/login");
+    }
+  }, [navigate]);
+
+  // CSV UPLOAD HANDLER
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const text = event.target.result;
+      const text = event.target.result.trim();
       const rows = text.split("\n").map((r) => r.split(","));
       setPreviewRows(rows.slice(1)); // skip header
     };
@@ -22,26 +36,58 @@ export default function StudentCSVImport() {
   return (
     <div className="page-layout">
 
-      {/* LEFT DRAWER */}
-      <aside className="left-drawer">
-        <div className="drawer-header">
-          <span className="drawer-title">Academic Progress Tracker</span>
+      {/* LEFT COLUMN (drawer + info box) */}
+      <div className="sidebar-column">
+
+        {/* LEFT DRAWER */}
+        <aside className="left-drawer">
+          <div className="drawer-header">
+            <span className="drawer-title">Academic Progress Tracker</span>
+          </div>
+
+          <nav className="drawer-nav">
+            <button className="drawer-item">Sync Curriculum</button>
+
+            <button
+              className="drawer-item active"
+              onClick={() => navigate("/student-csv-import")}
+            >
+              Students Management & CSV Import
+            </button>
+
+            <button
+              className="drawer-item"
+              onClick={() => navigate("/instructor")}
+            >
+              Instructor Interface
+            </button>
+          </nav>
+        </aside>
+
+        {/* INFO BOX BELOW DRAWER */}
+        <div className="instructor-info-panel">
+          <div className="instructor-name">{instructor.name}</div>
+          <div className="instructor-email">{instructor.email}</div>
+
+          <button
+            className="logout-btn"
+            onClick={() => {
+              localStorage.clear();
+              navigate("/login");
+            }}
+          >
+            Logout
+          </button>
         </div>
 
-        <nav className="drawer-nav">
-          <button className="drawer-item">Sync Curriculum</button>
-          <button className="drawer-item active" onClick={() => navigate("/student-csv-import")}>Students Management & CSV Import</button>
-          <button className="drawer-item" onClick={() => navigate("/instructor")}>Instructor Interface</button>
-        </nav>
-      </aside>
+      </div>
 
       {/* MAIN CONTENT */}
-      <div className="csv-container">
+      <main className="main-content">
 
         {/* TOP BAR */}
         <div className="csv-header">
           <h1>Students Management & CSV Import</h1>
-
         </div>
 
         {/* UPLOAD BOX */}
@@ -89,7 +135,7 @@ export default function StudentCSVImport() {
           </tbody>
         </table>
 
-      </div>
+      </main>
     </div>
   );
 }
