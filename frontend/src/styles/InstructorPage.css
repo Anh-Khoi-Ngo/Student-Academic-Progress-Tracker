@@ -287,3 +287,18 @@ thead .sticky-col {
 
   cursor: pointer;
 }
+
+.cell.blocked {
+    background-color: #ffdddd;
+    opacity: 0.6;
+}
+
+.blocked-select {
+    background-color: #ffcccc;
+    border: 1px solid red;
+}
+
+.cell.blocked::after {
+    content: "⚠️";
+    margin-left: 6px;
+}

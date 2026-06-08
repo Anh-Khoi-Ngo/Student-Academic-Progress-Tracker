@@ -12,12 +12,14 @@ export default function InstructorPage() {
       navigate("/login");
     }
   }, [navigate]);
+
   const BACKEND = "http://10.157.123.59/backend";
 
   const [students, setStudents] = useState([]);
   const [studentsWithGrades, setStudentsWithGrades] = useState([]);
+  const [prereqs, setPrereqs] = useState([]);
 
-  // Instructor info from localStorage
+  // Instructor info
   const instructor = {
     name: localStorage.getItem("instructorName"),
     email: localStorage.getItem("instructorEmail")
@@ -29,6 +31,17 @@ export default function InstructorPage() {
       .then(res => res.json())
       .then(setStudents)
       .catch(err => console.error("students.php error:", err));
+  }, []);
+
+  // Load prerequisites (FIXED: absolute URL + CORS)
+  useEffect(() => {
+    fetch("http://10.157.123.59/backend/prerequisites.php", {
+      method: "GET",
+      mode: "cors"
+    })
+      .then(res => res.json())
+      .then(setPrereqs)
+      .catch(err => console.error("prerequisites.php error:", err));
   }, []);
 
   // Load grades for each student
@@ -43,7 +56,7 @@ export default function InstructorPage() {
         enriched.push({
           ...s,
           grades: grades.reduce((acc, g) => {
-            acc[g.Course_code] = {
+            acc[g.Course_code.toUpperCase()] = {
               title: g.Title,
               grade: g.Status
             };
@@ -62,13 +75,15 @@ export default function InstructorPage() {
   const allCourses = useMemo(() => {
     const set = new Set();
     studentsWithGrades.forEach(s => {
-      Object.keys(s.grades).forEach(code => set.add(code));
+      Object.keys(s.grades).forEach(code => set.add(code.toUpperCase()));
     });
     return Array.from(set).sort();
   }, [studentsWithGrades]);
 
   // Update grade locally + save to DB
   const updateGrade = async (studentId, courseCode, newGrade) => {
+    const code = courseCode.toUpperCase();
+
     setStudentsWithGrades(prev =>
       prev.map(s =>
         s.studentId === studentId
@@ -76,8 +91,8 @@ export default function InstructorPage() {
               ...s,
               grades: {
                 ...s.grades,
-                [courseCode]: {
-                  ...s.grades[courseCode],
+                [code]: {
+                  ...s.grades[code],
                   grade: newGrade
                 }
               }
@@ -92,7 +107,7 @@ export default function InstructorPage() {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
           studentId,
-          courseCode,
+          courseCode: code,
           status: newGrade
         })
       });
@@ -101,12 +116,36 @@ export default function InstructorPage() {
     }
   };
 
+  // Prerequisite logic (uppercase normalized)
+  const isCourseBlocked = (student, courseCode) => {
+    const code = courseCode.toUpperCase();
+
+    const rules = prereqs.filter(
+      p => p.Course_code.toUpperCase() === code
+    );
+
+    for (const r of rules) {
+      const req = r.Requisite_code.toUpperCase();
+      const taken = student.grades[req]?.grade;
+
+      if (r.Type === "prerequisite") {
+        if (taken !== "Passed") return true;
+      }
+
+      if (r.Type === "corequisite") {
+        if (!taken || !["Passed", "Active", "In Progress"].includes(taken))
+          return true;
+      }
+    }
+
+    return false;
+  };
+
   return (
     <div className="page-layout">
 
-      {/* LEFT COLUMN (drawer + info box) */}
+      {/* LEFT COLUMN */}
       <div className="sidebar-column">
-
         <aside className="left-drawer">
           <div className="drawer-header">
             <span className="drawer-title">Academic Progress Tracker</span>
@@ -123,7 +162,7 @@ export default function InstructorPage() {
           </nav>
         </aside>
 
-        {/* INFO BOX BELOW DRAWER */}
+        {/* INFO BOX */}
         <div className="instructor-info-panel">
           <div className="instructor-name">{instructor.name}</div>
           <div className="instructor-email">{instructor.email}</div>
@@ -138,7 +177,6 @@ export default function InstructorPage() {
             Logout
           </button>
         </div>
-
       </div>
 
       {/* MAIN CONTENT */}
@@ -182,14 +220,18 @@ export default function InstructorPage() {
                     {allCourses.map(code => {
                       const course = s.grades[code];
                       const grade = course?.grade || "Not Started";
+                      const blocked = isCourseBlocked(s, code);
 
                       return (
-                        <td key={code} className="cell">
+                        <td
+                          key={code}
+                          className={`cell ${blocked ? "blocked" : ""}`}
+                        >
                           <select
                             value={grade}
-                            onChange={e =>
-                              updateGrade(s.studentId, code, e.target.value)
-                            }
+                            disabled={blocked}
+                            className={blocked ? "blocked-select" : ""}
+                            onChange={e => updateGrade(s.studentId, code, e.target.value)}
                           >
                             <option value="Passed">Passed</option>
                             <option value="Failed">Failed</option>
