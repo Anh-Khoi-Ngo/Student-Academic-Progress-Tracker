@@ -1,4 +1,5 @@
 <?php
+
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
@@ -19,7 +20,7 @@ $stmt = $conn->prepare("CALL UpdateEnrollmentStatus(?, ?, ?)");
 $stmt->bind_param("iss", $studentId, $courseCode, $status);
 $stmt->execute();
 
-$result = $stmt->get_result();
-$response = $result->fetch_assoc();
-
-echo json_encode($response);
+echo json_encode([
+    "success" => true,
+    "message" => "Status updated successfully"
+]);
