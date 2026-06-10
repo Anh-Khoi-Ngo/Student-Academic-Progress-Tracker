@@ -219,9 +219,12 @@ export default function InstructorPage() {
 
                     {allCourses.map(code => {
                       const course = s.grades[code];
-                      const grade = course?.grade || "Not Started";
+                      let grade = course?.grade || "Not Started";
                       const blocked = isCourseBlocked(s, code);
-
+                      if (blocked && grade !== "Not Started") {
+                          grade = "Not Started";
+                          updateGrade(s.studentId, code, "Not Started");
+                      }
                       return (
                         <td
                           key={code}
